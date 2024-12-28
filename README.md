@@ -22,9 +22,14 @@ The arduino loop does the following:
 
 ![workflow](assets/arduino_workflow.png)
 
-1. Read all the sensors
+1. **Read all the sensors**
+   Using multiplexing, read all states from the 64 hall sensors and build a board state from it. If a state change is detected, then we serialize the board state and send it to the computer.
 2. Read the LED input state
+   Read from usb and set the desired LED state
 3. Display the LEDs
+   For each lit LED from the input state, light the corresponding LED on the board, wait 2ms, and turn it off.
+
+Since we are multiplexing the display, the entire loop needs to be fast enough that the LEDs don't flicker.
 
 ## The electronics
 
