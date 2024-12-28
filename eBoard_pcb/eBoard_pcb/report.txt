@@ -1,0 +1,11 @@
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-F_Cu.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-B_Cu.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-F_Paste.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-B_Paste.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-F_Silkscreen.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-B_Silkscreen.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-F_Mask.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-B_Mask.gbr'.
+Plotted to '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-Edge_Cuts.gbr'.
+Created Gerber job file '/Users/aherve/Work/electronics/eBoard/eBoard_pcb/eBoard_pcb/gerber/eBoard_pcb-job.gbrjob'.
+Info: Done.

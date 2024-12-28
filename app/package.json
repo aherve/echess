@@ -1,0 +1,23 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "pnpm vitest --isolate=false",
+    "emulate-serial": "socat -d -d pty,raw,echo=0 pty,raw,echo=0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "chess.js": "1.0.0-beta.8",
+    "serialport": "^12.0.0",
+    "winston": "^3.13.1",
+    "zod": "^3.23.8"
+  }
+}
