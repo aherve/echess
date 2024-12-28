@@ -109,6 +109,7 @@ A chess board has a very convenient size of 8x8, which allows to represent a row
 This protocol allows the board to send partial states between led blinks, which removes any flickering from the display. The program can wait for a (255, 255, 255) sequence to know that the board state is fully transmitted, and in case of data corruption, it can ignore a broken state, and start over everytime a (255, 255, 255) sequence is detected.
 
 ![encoding](assets/encoding.png)
+_Example of how a row with 2 white pieces and 1 black piece would be encoded_
 
 ## The program
 
