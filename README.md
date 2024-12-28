@@ -2,7 +2,7 @@
 
 https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205
 
-_Demo game against a computer_
+_Demo game against a lichess bot. The phone showcases the game for demo purposes, but isn't actually required to play_
 
 ## How it works
 
