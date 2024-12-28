@@ -2,4 +2,6 @@
 
 Electronic board to play online chess over the board
 
-![Demo video](/assets/demo.mp4)
+
+https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205
+
