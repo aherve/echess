@@ -24,7 +24,7 @@ Using linear sensors we are then able to detect between 3 distinct states:
 - black piece (high voltage)
 - no piece (~ half the supply voltage)
 
-In addition to the sensors, a 64x64 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with a typescript program running on a computer to control the LEDs, read the sensors, and communicate with the lichess API.
+In addition to the sensors, a 8x8 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with a typescript program running on a computer to control the LEDs, read the sensors, and communicate with the lichess API.
 
 ## Showing the moves
 
@@ -43,7 +43,7 @@ Since the arduino has a limited number of pins, two 74HC595 shift registers are 
 
 ### The sensor matrix
 
-According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
+According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some BJT transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
 
 <figure>
 <img src="assets/hall_sensors_matrix_details.png" width="350">
