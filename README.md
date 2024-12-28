@@ -4,6 +4,14 @@ https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205
 
 ## How it works
 
+- The board is equipped with 64 hall effect sensors, and 64 LEDs.
+- The board can communicate via usb to a noedjs typescript program that runs on a laptop
+- The program can then communicat with lichess to send our moves, and receive the opponent's moves
+
+![overview](assets/project_overview.png)
+
+### Piece detection
+
 The general principle is to hide magnetic hall effect sensors under the board to detect piece presence. White & black pieces have a hidden magnet in them, in different orientations, respectively
 
 <img src="assets/hall.png" width="350" align="right">
@@ -16,6 +24,12 @@ Using linear sensors we are then able to detect between 3 distinct states:
 
 In addition to the sensors, a 64x64 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with a typescript program running on a computer to control the LEDs, read the sensors, and communicate with the lichess API.
 
+## Showing the moves
+
+Each square is equipped with a blue LED that can be lit to signal the opponent's move.
+
+![usb](assets/after_pcb.jpg)
+
 ## The electronics
 
 For the board to work, is is necessary to:
@@ -25,7 +39,7 @@ For the board to work, is is necessary to:
 
 Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs with multiplexing, and an additional 74HC4051 multiplexer is used to control the sensor rows. Each of the sensor outputs are connected to one of the analog inputs of the microcontroller.
 
-### Building the sensor matrix
+### The sensor matrix
 
 According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
 
@@ -42,16 +56,16 @@ With this setup, [the microcontroller](arduino/arduino.ino) can use multiplexing
 
 ### The final build
 
-For the build I soldered 64 leds, hall effect sensors, and transistors directly to a wooden board I build and painted. The shift-registered are wired to the microcontroller thanks to a custom PCB [ whose files can be found here ](eBoard_pcb)
+For the build I soldered 64 leds, hall effect sensors, and transistors directly to a wooden board I build and painted. The shift-register ICs are wired to the microcontroller thanks to a custom PCB [ whose files can be found here ](eBoard_pcb)
+
+![pcb](assets/naked_pcb.jpg)
+_soldered pcb with arduino nano, IC sockets and some connectors_
 
 ![internal](assets/internals.jpg)
 _internal view of the board_
 
 ![pcb closeup](assets/pcb_closeup.jpg)
-_closeup of the pcb_
-
-![usb](assets/after_pcb.jpg)
-_finished board usb connection_
+_closeup of the pcb after installation_
 
 ## Microconctroller setup
 
@@ -65,7 +79,7 @@ The arduino loop does the following:
 
 1. **Read all the sensors**
 
-Using multiplexing, read all states from the 64 hall sensors and build a board state from it. If a state change is detected, then we serialize the board state and send it to the computer.
+   Using multiplexing, read all states from the 64 hall sensors and build a board state from it. If a state change is detected, then we serialize the board state and send it to the computer.
 
 2. **Read the LED input state**
 
@@ -75,7 +89,7 @@ Using multiplexing, read all states from the 64 hall sensors and build a board s
 
    For each lit LED from the input state, light the corresponding LED on the board, wait 2ms, and turn it off.
 
-Since we are multiplexing the display, the entire loop needs to be fast enough that the LEDs don't flicker.
+Since we are multiplexing the display, the entire loop needs to be _fast_. Fast enough that you don't see any flickering while we are reading 64 sensors and communicating via USB between each LED blink.
 
 ## Serializing the position
 
