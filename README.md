@@ -25,4 +25,9 @@ For the board to work, is is necessary to:
 
 Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs, and an additional 74HC4051 multiplexer is used to control the sensor rows.
 
+The three 74HC595 shift registers are daisy chained, and connected to the arduino as follows:
+
 ![overview](assets/electronics_schematics_overview.png)
+_overview of the electronics_
+
+![led matrix](assets/led_matrix_schematics.png)
