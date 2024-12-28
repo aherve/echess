@@ -18,6 +18,14 @@ In addition to the sensors, a 64x64 LED matrix is used to display the opponent's
 
 ## Microcontroller workflow
 
+The arduino loop does the following:
+
+![workflow](assets/arduino_workflow.png)
+
+1. Read all the sensors
+2. Read the LED input state
+3. Display the LEDs
+
 ## The electronics
 
 For the board to work, is is necessary to:
