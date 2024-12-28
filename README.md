@@ -28,7 +28,7 @@ In addition to the sensors, a 64x64 LED matrix is used to display the opponent's
 
 Each square is equipped with a blue LED that can be lit to signal the opponent's move. It's bright enough that we don't miss a move, and discreet enough that it doesn't distract from the game.
 
-![usb](assets/after_pcb.jpg)
+<img src="assets/after_pcb.jpg" width="500">
 
 ## The electronics
 
@@ -44,7 +44,7 @@ Since the arduino has a limited number of pins, two 74HC595 shift registers are 
 According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
 
 <figure>
-<img src="assets/hall_sensors_matrix_details.png" width="350" >
+<img src="assets/hall_sensors_matrix_details.png" width="350">
 <figcaption>Details of the sensor matrix, only 4 sensors are shown. Sending <i>QA=1</i>, <i>QB=0</i> and reading <i>A1</i> input would provide a reading of the bottom-right sensor of this diagram</figcaption>
 </figure>
 
