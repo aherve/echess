@@ -16,7 +16,48 @@ Using linear sensors we are then able to detect between 3 distinct states:
 
 In addition to the sensors, a 64x64 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with a typescript program running on a computer to control the LEDs, read the sensors, and communicate with the lichess API.
 
-## Microcontroller workflow
+## The electronics
+
+For the board to work, is is necessary to:
+
+- read inputs from the program, and light any number of leds of a 8x8 grid
+- read the state of 64 hall effect sensors in near real time, and send the state to the program
+
+Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs with multiplexing, and an additional 74HC4051 multiplexer is used to control the sensor rows. Each of the sensor outputs are connected to one of the analog inputs of the microcontroller.
+
+### Building the sensor matrix
+
+According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
+
+<img src="assets/hall_sensors_matrix_details.png" width="350" >
+
+### Electronics overview
+
+The three 74HC595 shift registers are chained, and connected to the arduino as follows(only 4 sensors are shown for simplicity):
+
+![overview](assets/electronics_schematics_overview.png)
+_overview of the electronics_
+
+With this setup, [the microcontroller](arduino/arduino.ino) can use multiplexing to control the LEDs and read the sensors in near real time.
+
+### The final build
+
+For the build I soldered 64 leds, hall effect sensors, and transistors directly to a wooden board I build and painted. The shift-registered are wired to the microcontroller thanks to a custom PCB [ whose files can be found here ](eBoard_pcb)
+
+![internal](assets/internals.jpg)
+_internal view of the board_
+
+![pcb closeup](assets/pcb_closeup.jpg)
+_closeup of the pcb_
+
+![usb](assets/after_pcb.jpg)
+_finished board usb connection_
+
+## Microconctroller setup
+
+Arduino nano is used. It's cheap, small, and conveniently has 8 analog inputs, which is perfect for this use case.
+
+## workflow
 
 The arduino loop does the following:
 
@@ -36,26 +77,30 @@ Using multiplexing, read all states from the 64 hall sensors and build a board s
 
 Since we are multiplexing the display, the entire loop needs to be fast enough that the LEDs don't flicker.
 
-## The electronics
+## Serializing the position
 
-For the board to work, is is necessary to:
+A chess board has a very convenient size of 8x8, which allows to represent a row with exactly two bytes:
 
-- read inputs from the program, and light any number of leds of a 8x8 grid
-- read the state of 64 hall effect sensors in near real time, and send the state to the program
+- first byte signals positions of white pieces on row _a_
+- second byte signals positions of black pieces on row _a_
+- third byte signals positions of white pieces on row _b_
+- ...etc until 16 bytes are sent to fully represent the board
+- at the end of a serialization, three 255 bytes are sent to signal the end of the transmission. Since (255, 255, 255) would represent at least one row filled with both white _and_ black pieces, there is no ambiguity in the transmission.
 
-Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs with multiplexing, and an additional 74HC4051 multiplexer is used to control the sensor rows. Each of the sensor outputs are connected to one of the analog inputs of the microcontroller.
+This protocol allows the board to send partial states between led blinks, which removes any flickering from the display. The program can wait for a (255, 255, 255) sequence to know that the board state is fully transmitted, and in case of data corruption, it can ignore a broken state, and start over everytime a (255, 255, 255) sequence is detected.
 
-### Building the sensor matrix
+![encoding](assets/encoding.png)
 
-According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors:
+## The program
 
-<img src="assets/hall_sensors_matrix_details.png" width="350" >
+Lastly, the main program is written in typescript, and uses the `serialport` library to communicate with the arduino. It will read both the board state and the game moves from lichess to reconcilate the position, and determine when a move should be played (_i.e._ sent to the server), or when some LEDs should be lit.
 
-### Electronics overview
+The code can be found in [the app directory](app/)
 
-The three 74HC595 shift registers are chained, and connected to the arduino as follows(only 4 sensors are shown for simplicity):
+## Conclusion
 
-![overview](assets/electronics_schematics_overview.png)
-_overview of the electronics_
+I've been playing with this board for quite a while now, and it has been a tremendous experience so far. It's definitely not suited for fast time controls, but lichess only provide their real-time API for rapid & classical time-controls anyway (has to do with anti-cheating measures I believe).
 
-With this setup, [the microcontroller](arduino/arduino.ino) can use multiplexing to control the LEDs and read the sensors in near real time.
+Playing lichess games while looking at a physical board is a delight, and has become my main way of playing chess at home.
+
+The only missing feature is a clock display on the board. Since I have to plug the board a laptop anyway, I usually look at the computer's screen when I want to see the clock. Not ideal, but good enough that I didn't bother implementing it yet. Maybe someday ¯\\\_(ツ)\_/¯
