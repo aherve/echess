@@ -5,8 +5,8 @@ https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205
 ## How it works
 
 - The board is equipped with 64 hall effect sensors, and 64 LEDs.
-- The board can communicate via usb to a noedjs typescript program that runs on a laptop
-- The program can then communicat with lichess to send our moves, and receive the opponent's moves
+- The board can communicate via usb to a nodejs program that runs on a laptop
+- The program can communicate with both lichess API and the physical board
 
 ![overview](assets/project_overview.png)
 
@@ -26,7 +26,7 @@ In addition to the sensors, a 64x64 LED matrix is used to display the opponent's
 
 ## Showing the moves
 
-Each square is equipped with a blue LED that can be lit to signal the opponent's move.
+Each square is equipped with a blue LED that can be lit to signal the opponent's move. It's bright enough that we don't miss a move, and discreet enough that it doesn't distract from the game.
 
 ![usb](assets/after_pcb.jpg)
 
@@ -34,25 +34,28 @@ Each square is equipped with a blue LED that can be lit to signal the opponent's
 
 For the board to work, is is necessary to:
 
-- read inputs from the program, and light any number of leds of a 8x8 grid
-- read the state of 64 hall effect sensors in near real time, and send the state to the program
+- read inputs from the program, and light any combination of leds on a 8x8 grid
+- read the state of 64 hall effect sensors in near real time, and send the state to the program whenever a change is detected
 
-Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs with multiplexing, and an additional 74HC4051 multiplexer is used to control the sensor rows. Each of the sensor outputs are connected to one of the analog inputs of the microcontroller.
+Since the arduino has a limited number of pins, two 74HC595 shift registers are used to control the LEDs with multiplexing, and an additional 74HC4051 multiplexer is used to control the sensor rows. Each of the sensor outputs are connected to one of the analog inputs of the microcontroller (arduino conveniently has 8 of them).
 
 ### The sensor matrix
 
 According to their spreadsheet, the power-on time of the the hall sensors is somewhere from 175μs to 300μs. This is slow enough that we can't use multiplexing to power the sensors. Instead I went for a 8x8 matrix where all of the sensors are always powered. Their input readings are then selected using some pn2222 transistors whose switch time is in the order of 30ns (so about 8 500 times faster than the sensors power-on time)
 
+<figure>
 <img src="assets/hall_sensors_matrix_details.png" width="350" >
+<figcaption>Details of the sensor matrix, only 4 sensors are shown. Sending <i>QA=1</i>, <i>QB=0</i> and reading <i>A1</i> input would provide a reading of the bottom-right sensor of this diagram</figcaption>
+</figure>
 
 ### Electronics overview
 
 The three 74HC595 shift registers are chained, and connected to the arduino as follows(only 4 sensors are shown for simplicity):
 
 ![overview](assets/electronics_schematics_overview.png)
-_overview of the electronics_
+_complete overview of the electronics. Full kiCad files can be found in the [kiCad](kiCad) directory_
 
-With this setup, [the microcontroller](arduino/arduino.ino) can use multiplexing to control the LEDs and read the sensors in near real time.
+With this setup, [the microcontroller](arduino/arduino.ino) can use multiplexing to control the LEDs and read the sensors in near real time, while using very few pins from the microcontroller.
 
 ### The final build
 
