@@ -1,6 +1,6 @@
 # eChess: play online chess, but over the board
 
-https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205
+![demo](https://github.com/user-attachments/assets/bde2e431-92bb-4959-bb7b-e80072c71205)
 
 ## How it works
 
