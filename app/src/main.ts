@@ -15,10 +15,10 @@ export async function main() {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
-  gui.hasBoard = true;
+  gui.setBoardStatus(true);
   const game = new GameHandler(port);
 
-  emitSerialEvents(port, game).catch((err) => {
+  emitSerialEvents(port, game, gui).catch((err) => {
     logger.error("Error while handling serial events", err);
     process.exit(1);
   });
@@ -73,7 +73,7 @@ async function openSerial(): Promise<SerialPort | null> {
   });
 }
 
-function emitSerialEvents(port: SerialPort, game: GameHandler) {
+function emitSerialEvents(port: SerialPort, game: GameHandler, gui: Gui) {
   return new Promise((_, reject) => {
     const dataBuffer: number[] = [];
     port.on("error", reject);
@@ -84,7 +84,9 @@ function emitSerialEvents(port: SerialPort, game: GameHandler) {
       dataBuffer.push(...data);
       const latestMessage = getLatestMessage(dataBuffer);
       if (latestMessage) {
-        game.updateArduinoBoard(buildBoard(latestMessage));
+        const board = buildBoard(latestMessage);
+        gui.updateBoard(board);
+        game.updateArduinoBoard(board);
       }
     });
   });
@@ -109,15 +111,7 @@ function buildBoard(binaryState: Array<number>): Array<Array<SquareState>> {
       }
     }
   }
-  displayBoard(board);
   return board;
-}
-
-function displayBoard(board: Array<Array<string>>) {
-  for (let i = 7; i >= 0; i--) {
-    logger.info(board[i].join("|"));
-  }
-  logger.info(" ");
 }
 
 export function getLatestMessage(dataBuffer: number[]): number[] | null {
