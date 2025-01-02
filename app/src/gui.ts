@@ -117,18 +117,22 @@ export class Gui {
       });
     } else {
       box.content = "Ready for a new game";
-      const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.box, {
+      const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.button, {
         align: "center",
         content: "Create 15 | 10 game",
         left: "center",
+        mouse: true,
+        keys: true,
       });
-      const tenFive = this.grid.set(4, 6, 5, 5, blessed.box, {
+      const tenFive = this.grid.set(4, 6, 5, 5, blessed.button, {
         align: "center",
         content: "Create 10 | 5 game",
         left: "center",
+        mouse: true,
+        keys: true,
       });
 
-      fifteenTen.on("click", () => {
+      fifteenTen.on("press", () => {
         createSeek({ time: 15, increment: 10 })
           .then(() => {
             fifteenTen.setContent("Looking for an opponent...");
@@ -138,7 +142,7 @@ export class Gui {
             logger.error(e);
           });
       });
-      tenFive.on("click", () => {
+      tenFive.on("press", () => {
         createSeek({ time: 10, increment: 5 })
           .then(() => {
             fifteenTen.setContent("Looking for an opponent...");
