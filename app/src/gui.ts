@@ -78,7 +78,7 @@ export class Gui {
         prettyTimer(this.color === "white" ? this.btime : this.wtime) +
         (this.isMyTurn ? "  " : " \u{1F7E2}"),
     });
-    this.grid.set(6, 0, 12, 12, blessed.box, {
+    this.grid.set(6, 0, 6, 12, blessed.box, {
       align: "center",
       content:
         prettyTimer(this.color === "white" ? this.wtime : this.btime) +
