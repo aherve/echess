@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "pnpm vitest --isolate=false",
+    "test": "pnpm vitest run --isolate=false",
+    "test:watch": "pnpm vitest --isolate=false",
     "emulate-serial": "socat -d -d pty,raw,echo=0 pty,raw,echo=0"
   },
   "keywords": [],
