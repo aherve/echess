@@ -4,9 +4,18 @@ import { GameHandler } from "./game-handler";
 import { findAndWatch, streamGame } from "./lichess";
 import { SquareState } from "./utils";
 import { logger } from "./logger";
+import { Gui } from "./gui";
 
 export async function main() {
-  const port = await openSerial();
+  let gui = new Gui();
+  let port: SerialPort | null = null;
+  while (!port) {
+    port = await openSerial();
+    if (!port) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  gui.hasBoard = true;
   const game = new GameHandler(port);
 
   emitSerialEvents(port, game).catch((err) => {
@@ -29,22 +38,22 @@ export async function main() {
         );
       }
     }
-    await emitLichessEvents(lichessGame.fullId, game);
+    await emitLichessEvents(lichessGame.fullId, game, gui);
     logger.info("game ended");
     game.terminateGame();
   }
 }
 
-async function openSerial(): Promise<SerialPort> {
+async function openSerial(): Promise<SerialPort | null> {
   const paths = (await SerialPort.list()).filter(
     (port) =>
       port.path.startsWith("/dev/tty.usbserial") ||
       port.path.startsWith("/dev/cu.usbserial")
   );
   if (paths.length === 0) {
-    throw new Error("No serial port found");
+    return null;
   }
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     logger.info("opening serial port");
     const port: SerialPort = new SerialPort(
       {
@@ -54,7 +63,8 @@ async function openSerial(): Promise<SerialPort> {
       },
       (err) => {
         if (err) {
-          return reject(err);
+          logger.error("Error while opening serial port", err);
+          return resolve(null);
         }
         logger.info("serial port opened");
         return resolve(port);
@@ -133,18 +143,18 @@ export function getLatestMessage(dataBuffer: number[]): number[] | null {
   return null;
 }
 
-async function emitLichessEvents(gameId: string, game: GameHandler) {
+async function emitLichessEvents(gameId: string, game: GameHandler, gui: Gui) {
   for await (const lichessEvent of streamGame(gameId)) {
     logger.info("got lichess event", lichessEvent);
     switch (lichessEvent.type) {
       case "gameFull": {
-        const moves = lichessEvent.state.moves;
-        await game.updateLichessMoves(moves);
+        gui.updateClock(lichessEvent.state);
+        await game.updateLichessMoves(lichessEvent.state.moves);
         break;
       }
       case "gameState": {
-        const moves = lichessEvent.moves;
-        await game.updateLichessMoves(moves);
+        gui.updateClock(lichessEvent);
+        await game.updateLichessMoves(lichessEvent.moves);
         break;
       }
       case "opponentGone": {

@@ -11,10 +11,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/blessed": "^0.1.25",
     "@types/node": "^20.14.11",
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
     "chess.js": "1.0.0-beta.8",
     "serialport": "^12.0.0",
     "winston": "^3.13.1",
