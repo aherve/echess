@@ -1,5 +1,9 @@
+import contrib from "blessed-contrib";
 import blessed from "blessed";
 import { SquareState } from "./utils";
+import { asciiPlug, asciiUsb } from "./ascii-art";
+import { createSeek } from "./lichess";
+import { logger } from "./logger";
 
 export class Gui {
   private btime = -1;
@@ -8,6 +12,7 @@ export class Gui {
   private screen: blessed.Widgets.Screen;
   private wtime = -1;
   private board: Array<Array<SquareState>> = [];
+  private grid: contrib.grid;
 
   constructor() {
     this.screen = blessed.screen({
@@ -15,6 +20,10 @@ export class Gui {
       autoPadding: true,
       terminal: "xterm-basic",
     });
+    this.screen.key(["escape", "q", "C-c"], () => {
+      return process.exit(0);
+    });
+    this.grid = new contrib.grid({ rows: 12, cols: 12, screen: this.screen });
     this.render();
   }
 
@@ -45,11 +54,8 @@ export class Gui {
   }
 
   private renderNoGame() {
-    const box = blessed.box({
-      top: "center",
-      left: "center",
-      width: "80%",
-      height: "80%",
+    const box = this.grid.set(0, 0, 12, 12, blessed.box, {
+      align: "center",
       border: {
         type: "line",
       },
@@ -62,7 +68,7 @@ export class Gui {
     });
 
     if (isUnpoweredBoard(this.board)) {
-      box.content = "Please connect the board to a power source.";
+      box.content = "Please connect the board to a power source." + asciiPlug;
     } else if (!isStartingPosition(this.board)) {
       box.content = "Please place the pieces in the starting position.";
 
@@ -76,20 +82,50 @@ export class Gui {
         content: buildAsciiBoard(this.board),
       });
     } else {
-      box.content = "Board is ready for a new game";
+      const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.box, {
+        align: "center",
+        content: "Create 15 | 10 game",
+        left: "center",
+      });
+      const tenFive = this.grid.set(4, 6, 5, 5, blessed.box, {
+        align: "center",
+        content: "Create 10 | 5 game",
+        left: "center",
+      });
+
+      fifteenTen.on("click", () => {
+        createSeek({ time: 15, increment: 10 })
+          .then(() => {
+            fifteenTen.setContent("Looking for an opponent...");
+            this.screen.render();
+          })
+          .catch((e) => {
+            logger.error(e);
+          });
+      });
+      tenFive.on("click", () => {
+        createSeek({ time: 10, increment: 5 })
+          .then(() => {
+            fifteenTen.setContent("Looking for an opponent...");
+            this.screen.render();
+          })
+          .catch((e) => {
+            logger.error(e);
+          });
+      });
     }
 
-    this.screen.append(box);
     this.screen.render();
   }
 
   private renderNoBoard() {
-    const box = blessed.box({
+    this.grid.set(0, 0, 12, 12, blessed.box, {
       top: "center",
+      align: "center",
       left: "center",
-      width: "80%",
-      height: "80%",
-      content: "Connecting to the board...",
+      width: "95%",
+      height: "95%",
+      content: `Connecting to the board...` + asciiUsb,
       tags: true,
       border: {
         type: "line",
@@ -101,7 +137,7 @@ export class Gui {
         },
       },
     });
-    this.screen.append(box);
+
     this.screen.render();
   }
 }

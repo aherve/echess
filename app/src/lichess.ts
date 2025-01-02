@@ -15,6 +15,30 @@ export async function claimVictory(gameId: string) {
   return claimed.ok;
 }
 
+export async function createSeek({
+  time,
+  increment,
+}: {
+  time: number;
+  increment: number;
+}) {
+  const seek = await lichessFetch(
+    "board/seek",
+    {
+      rated: "true",
+      time: `${time}`,
+      increment: `${increment}`,
+      variant: "standard",
+    },
+    "POST"
+  );
+  if (!seek.ok) {
+    logger.error(await seek.text());
+    throw new Error("Error while creating seek");
+  }
+  return seek.ok;
+}
+
 export async function playMove(gameId: string, move: string) {
   const played = await lichessFetch(
     `board/game/${gameId}/move/${move}`,
