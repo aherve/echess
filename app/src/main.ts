@@ -32,6 +32,7 @@ export async function main() {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         logger.info("found game", lichessGame.fullId);
+        gui.setMyColor(lichessGame.color);
         await game.reset(
           lichessGame.fullId,
           lichessGame.color === "white" ? "w" : "b"
@@ -41,6 +42,7 @@ export async function main() {
     await emitLichessEvents(lichessGame.fullId, game, gui);
     logger.info("game ended");
     game.terminateGame();
+    gui.terminateGame();
   }
 }
 

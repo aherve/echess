@@ -35,6 +35,7 @@ export const GameStateEventSchema = z.object({
   ]),
   winner: z.enum(["white", "black"]).optional(),
 });
+export type GameStateEvent = z.infer<typeof GameStateEventSchema>;
 
 export const GameFullEventSchema = z.object({
   type: z.literal("gameFull"),

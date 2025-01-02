@@ -4,6 +4,7 @@ import { SquareState } from "./utils";
 import { asciiPlug, asciiUsb } from "./ascii-art";
 import { createSeek } from "./lichess";
 import { logger } from "./logger";
+import type { GameStateEvent } from "./types";
 
 export class Gui {
   private btime = -1;
@@ -13,12 +14,15 @@ export class Gui {
   private wtime = -1;
   private board: Array<Array<SquareState>> = [];
   private grid: contrib.grid;
+  private color: "black" | "white" | null = null;
+  private isMyTurn = false;
 
   constructor() {
     this.screen = blessed.screen({
       smartCSR: true,
       autoPadding: true,
       terminal: "xterm-basic",
+      fullUnicode: true,
     });
     this.screen.key(["escape", "q", "C-c"], () => {
       return process.exit(0);
@@ -27,14 +31,28 @@ export class Gui {
     this.render();
   }
 
+  public terminateGame() {
+    this.hasGame = false;
+    this.render();
+  }
+
   public setBoardStatus(hasBoard: boolean) {
     this.hasBoard = hasBoard;
     this.render();
   }
 
-  public updateClock({ btime, wtime }: { btime: number; wtime: number }) {
+  public setMyColor(color: "black" | "white") {
+    this.color = color;
+  }
+
+  public updateClock({ btime, wtime, moves }: GameStateEvent) {
+    this.hasGame = true;
     this.wtime = wtime;
     this.btime = btime;
+    this.isMyTurn =
+      (this.color === "white" && moves.length % 2 === 0) ||
+      (this.color === "black" && moves.length % 2 === 1);
+    logger.info("is my turn", { isMyTurn: this.isMyTurn });
     this.render();
   }
 
@@ -50,7 +68,23 @@ export class Gui {
     if (!this.hasGame) {
       return this.renderNoGame();
     }
-    console.log({ wtime: this.wtime, btime: this.btime });
+    this.renderGame();
+  }
+
+  private renderGame() {
+    this.grid.set(0, 0, 6, 12, blessed.box, {
+      align: "center",
+      content:
+        prettyTimer(this.color === "white" ? this.btime : this.wtime) +
+        (this.isMyTurn ? "  " : " \u{1F7E2}"),
+    });
+    this.grid.set(6, 0, 12, 12, blessed.box, {
+      align: "center",
+      content:
+        prettyTimer(this.color === "white" ? this.wtime : this.btime) +
+        (this.isMyTurn ? " \u{1F7E2}" : "  "),
+    });
+    this.screen.render();
   }
 
   private renderNoGame() {
@@ -82,6 +116,7 @@ export class Gui {
         content: buildAsciiBoard(this.board),
       });
     } else {
+      box.content = "Ready for a new game";
       const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.box, {
         align: "center",
         content: "Create 15 | 10 game",
@@ -172,4 +207,21 @@ function isStartingPosition(board: Array<Array<SquareState>>): boolean {
     }
   }
   return true;
+}
+
+function prettyTimer(msTime: number): string {
+  const time = msTime / 1000;
+
+  const hours = Math.floor(time / 3600);
+  const minutes = Math.floor((time % 3600) / 60);
+  const seconds = Math.floor(time % 60);
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+  return `${minutes.toString().padStart(2, "0")}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
 }
