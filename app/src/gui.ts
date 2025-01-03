@@ -25,6 +25,7 @@ export class Gui {
   private clockAnchor: ClockAnchor | null = null;
   private opponentName: string | null = null;
   private seekAbortController: AbortController | null = null;
+  private lastGameResult: "won" | "lost" | null = null;
 
   constructor() {
     this.screen = blessed.screen({
@@ -53,6 +54,7 @@ export class Gui {
 
   public startGame(game: Game) {
     playNotifySound();
+    this.lastGameResult = null;
     this.abortSeek();
     this.color = game.color;
     this.gameId = game.fullId;
@@ -61,6 +63,9 @@ export class Gui {
 
   public updateFromLichess(event: GameStateEvent) {
     this.playGameSound(event);
+    if (event.winner) {
+      this.lastGameResult = event.winner === this.color ? "won" : "lost";
+    }
     const { btime, wtime, moves } = event;
     this.clockAnchor = {
       setAt: Date.now(),
@@ -209,7 +214,11 @@ export class Gui {
     } else if (isUnpoweredBoard(this.board)) {
       box.content = "Please connect the board to a power source." + asciiPlug;
     } else if (!isStartingPosition(this.board)) {
-      box.content = "Please place the pieces in the starting position.";
+      box.content = "";
+      if (this.lastGameResult) {
+        box.content += `Game ${this.lastGameResult}!` + "\n";
+      }
+      box.content += "Please place the pieces in the starting position.";
 
       blessed.box({
         align: "center",
