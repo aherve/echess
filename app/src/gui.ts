@@ -4,7 +4,7 @@ import { SquareState } from "./utils";
 import { asciiPlug, asciiUsb } from "./ascii-art";
 import { abortGame, createSeek, drawGame, resignGame } from "./lichess";
 import { logger } from "./logger";
-import type { GameStateEvent } from "./types";
+import type { Game, GameStateEvent } from "./types";
 import { playCaptureSound, playMoveSound, playNotifySound } from "./sounds";
 import { Chess } from "chess.js";
 
@@ -23,6 +23,7 @@ export class Gui {
   private color: "black" | "white" | null = null;
   private isMyTurn = false;
   private clockAnchor: ClockAnchor | null = null;
+  private opponentName: string | null = null;
 
   constructor() {
     this.screen = blessed.screen({
@@ -40,6 +41,7 @@ export class Gui {
 
   public terminateGame() {
     this.gameId = null;
+    this.opponentName = null;
     playNotifySound();
   }
 
@@ -47,10 +49,11 @@ export class Gui {
     this.hasBoard = hasBoard;
   }
 
-  public setMyColor(color: "black" | "white", gameId: string) {
-    this.color = color;
-    this.gameId = gameId;
+  public startGame(game: Game) {
     playNotifySound();
+    this.color = game.color;
+    this.gameId = game.fullId;
+    this.opponentName = `${game.opponent.username} (${game.opponent.rating})`;
   }
 
   public updateFromLichess(event: GameStateEvent) {
@@ -85,12 +88,12 @@ export class Gui {
       case "created":
         return playNotifySound();
       case "started": {
-        const lichessMoves = event.moves.filter((m) => m.length);
+        const lichessMoves = event.moves;
         if (!lichessMoves.length) {
           return playNotifySound();
         }
         const g = new Chess();
-        for (const move of lichessMoves.filter(Boolean).slice(0, -1)) {
+        for (const move of lichessMoves.slice(0, -1)) {
           g.move(move);
         }
         const lastMove = g.move(lichessMoves[lichessMoves.length - 1]);
@@ -123,17 +126,23 @@ export class Gui {
     if (!this.color) {
       return;
     }
+    const opponentColor = this.color === "white" ? "black" : "white";
     this.grid.set(0, 0, 6, 10, blessed.box, {
       align: "center",
       content:
+        `${opponentColor}: ${this.opponentName}` +
+        "\n" +
         this.getPrettyTime({
-          forColor: this.color === "white" ? "black" : "white",
+          forColor: opponentColor,
           isPlaying: !this.isMyTurn,
-        }) + (this.isMyTurn ? "  " : " \u{1F7E2}"),
+        }) +
+        (this.isMyTurn ? "  " : " \u{1F7E2}"),
     });
     this.grid.set(6, 0, 6, 10, blessed.box, {
       align: "center",
       content:
+        `You play ${this.color}` +
+        "\n" +
         this.getPrettyTime({ forColor: this.color, isPlaying: this.isMyTurn }) +
         (this.isMyTurn ? " \u{1F7E2}" : "  "),
     });
@@ -141,7 +150,7 @@ export class Gui {
       top: "center",
       align: "center",
       left: "center",
-      content: "Resign 🏳",
+      content: "Resign 🏁",
       mouse: true,
     });
     resign.on(

@@ -15,7 +15,12 @@ export const ChatLineEventShema = z.object({
 
 export const GameStateEventSchema = z.object({
   type: z.literal("gameState"),
-  moves: z.string().transform((x) => x.split(" ")),
+  moves: z.string().transform((x) =>
+    x
+      .split(" ")
+      .map((s) => s.trim())
+      .filter((x) => x.length > 0)
+  ),
   wtime: z.number(),
   btime: z.number(),
   status: z.enum([
@@ -115,6 +120,7 @@ export const GameSchema = z.object({
   opponent: z.object({
     id: z.string().nullable(),
     username: z.string(),
+    rating: z.number().default(0),
     //ai: z.number(),
   }),
   isMyTurn: z.boolean(),
