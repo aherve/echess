@@ -6,16 +6,21 @@ import { createSeek } from "./lichess";
 import { logger } from "./logger";
 import type { GameStateEvent } from "./types";
 
+type ClockAnchor = {
+  wtime: number;
+  btime: number;
+  setAt: number;
+};
+
 export class Gui {
-  private btime = -1;
   private hasBoard = false;
   private hasGame = false;
   private screen: blessed.Widgets.Screen;
-  private wtime = -1;
   private board: Array<Array<SquareState>> = [];
   private grid: contrib.grid;
   private color: "black" | "white" | null = null;
   private isMyTurn = false;
+  private clockAnchor: ClockAnchor | null = null;
 
   constructor() {
     this.screen = blessed.screen({
@@ -28,7 +33,7 @@ export class Gui {
       return process.exit(0);
     });
     this.grid = new contrib.grid({ rows: 12, cols: 12, screen: this.screen });
-    this.render();
+    this.autoRefresh();
   }
 
   public terminateGame() {
@@ -47,18 +52,26 @@ export class Gui {
 
   public updateClock({ btime, wtime, moves }: GameStateEvent) {
     this.hasGame = true;
-    this.wtime = wtime;
-    this.btime = btime;
+    this.clockAnchor = {
+      setAt: Date.now(),
+      wtime: wtime,
+      btime: btime,
+    };
     this.isMyTurn =
       (this.color === "white" && moves.length % 2 === 0) ||
       (this.color === "black" && moves.length % 2 === 1);
-    logger.info("is my turn", { isMyTurn: this.isMyTurn });
     this.render();
   }
 
   public updateBoard(board: Array<Array<SquareState>>) {
     this.board = board;
     this.render();
+  }
+
+  private async autoRefresh() {
+    this.render();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    this.autoRefresh();
   }
 
   private render() {
@@ -72,16 +85,21 @@ export class Gui {
   }
 
   private renderGame() {
+    if (!this.color) {
+      return;
+    }
     this.grid.set(0, 0, 6, 12, blessed.box, {
       align: "center",
       content:
-        prettyTimer(this.color === "white" ? this.btime : this.wtime) +
-        (this.isMyTurn ? "  " : " \u{1F7E2}"),
+        this.getPrettyTime({
+          forColor: this.color === "white" ? "black" : "white",
+          isPlaying: !this.isMyTurn,
+        }) + (this.isMyTurn ? "  " : " \u{1F7E2}"),
     });
     this.grid.set(6, 0, 6, 12, blessed.box, {
       align: "center",
       content:
-        prettyTimer(this.color === "white" ? this.wtime : this.btime) +
+        this.getPrettyTime({ forColor: this.color, isPlaying: this.isMyTurn }) +
         (this.isMyTurn ? " \u{1F7E2}" : "  "),
     });
     this.screen.render();
@@ -118,15 +136,17 @@ export class Gui {
     } else {
       box.content = "Ready for a new game";
       const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.button, {
+        top: "center",
         align: "center",
         content: "Create 15 | 10 game",
         left: "center",
         mouse: true,
         keys: true,
       });
-      const tenFive = this.grid.set(4, 6, 5, 5, blessed.button, {
+      const tenZero = this.grid.set(4, 6, 5, 5, blessed.button, {
+        top: "center",
         align: "center",
-        content: "Create 10 | 5 game",
+        content: "Create 10 | 0 game",
         left: "center",
         mouse: true,
         keys: true,
@@ -142,8 +162,8 @@ export class Gui {
             logger.error(e);
           });
       });
-      tenFive.on("press", () => {
-        createSeek({ time: 10, increment: 5 })
+      tenZero.on("press", () => {
+        createSeek({ time: 10, increment: 0 })
           .then(() => {
             fifteenTen.setContent("Looking for an opponent...");
             this.screen.render();
@@ -178,6 +198,28 @@ export class Gui {
     });
 
     this.screen.render();
+  }
+
+  private getPrettyTime({
+    forColor,
+    isPlaying,
+  }: {
+    forColor: "white" | "black";
+    isPlaying: boolean;
+  }): string {
+    if (this.clockAnchor === null) {
+      return "";
+    }
+    const baseTime =
+      forColor === "white" ? this.clockAnchor.wtime : this.clockAnchor.btime;
+
+    if (isPlaying) {
+      const elapsed = Date.now() - this.clockAnchor.setAt;
+      const time = baseTime - elapsed;
+      return prettyTimer(time);
+    } else {
+      return prettyTimer(baseTime);
+    }
   }
 }
 

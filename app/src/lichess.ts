@@ -22,24 +22,23 @@ export async function createSeek({
   time: number;
   increment: number;
 }) {
-  logger.info("seek is disabled for now", { time, increment });
-  /*
-   *const seek = await lichessFetch(
-   *  "board/seek",
-   *  {
-   *    rated: "true",
-   *    time: `${time}`,
-   *    increment: `${increment}`,
-   *    variant: "standard",
-   *  },
-   *  "POST"
-   *);
-   *if (!seek.ok) {
-   *  logger.error(await seek.text());
-   *  throw new Error("Error while creating seek");
-   *}
-   *return seek.ok;
-   */
+  logger.info("seeking game", { time, increment });
+  const seek = await lichessFetch(
+    "board/seek",
+    {
+      rated: "true",
+      time: `${time}`,
+      increment: `${increment}`,
+      variant: "standard",
+      ratingRange: "",
+    },
+    "POST"
+  );
+  if (!seek.ok) {
+    logger.error(await seek.text());
+    throw new Error("Error while creating seek");
+  }
+  return seek.ok;
 }
 
 export async function playMove(gameId: string, move: string) {
@@ -110,16 +109,25 @@ export async function findAndWatch(): Promise<Game | null> {
 function lichessFetch(
   path: string,
   params?: Record<string, string>,
-  method = "GET"
+  method: "GET" | "POST" = "GET"
 ) {
-  return fetch(
-    `https://lichess.org/api/${path}?${new URLSearchParams(params ?? {})}`,
-    {
-      keepalive: true,
-      method: method ?? "GET",
-      headers: {
-        Authorization: `Bearer ${lichessToken}`,
-      },
-    }
-  );
+  const url =
+    method === "GET"
+      ? `https://lichess.org/api/${path}?${new URLSearchParams(params ?? {})}`
+      : `https://lichess.org/api/${path}`;
+
+  const hasBody =
+    method === "POST" && !!params && Object.keys(params).length > 0;
+
+  return fetch(url, {
+    keepalive: true,
+    method: method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${lichessToken}`,
+      ...(hasBody
+        ? { "Content-Type": "application/x-www-form-urlencoded" }
+        : {}),
+    },
+    ...(hasBody ? { body: new URLSearchParams(params) } : {}),
+  });
 }
