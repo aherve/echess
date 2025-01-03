@@ -24,6 +24,7 @@ export class Gui {
   private isMyTurn = false;
   private clockAnchor: ClockAnchor | null = null;
   private opponentName: string | null = null;
+  private seekAbortController: AbortController | null = null;
 
   constructor() {
     this.screen = blessed.screen({
@@ -42,6 +43,7 @@ export class Gui {
   public terminateGame() {
     this.gameId = null;
     this.opponentName = null;
+    this.abortSeek();
     playNotifySound();
   }
 
@@ -51,6 +53,7 @@ export class Gui {
 
   public startGame(game: Game) {
     playNotifySound();
+    this.abortSeek();
     this.color = game.color;
     this.gameId = game.fullId;
     this.opponentName = `${game.opponent.username} (${game.opponent.rating})`;
@@ -193,7 +196,17 @@ export class Gui {
       },
     });
 
-    if (isUnpoweredBoard(this.board)) {
+    if (this.seekAbortController) {
+      box.content = "Seeking a game...";
+      const abort = this.grid.set(4, 4, 4, 4, blessed.button, {
+        align: "center",
+        top: "center",
+        left: "center",
+        content: "Abort",
+        mouse: true,
+      });
+      abort.on("press", () => this.abortSeek());
+    } else if (isUnpoweredBoard(this.board)) {
       box.content = "Please connect the board to a power source." + asciiPlug;
     } else if (!isStartingPosition(this.board)) {
       box.content = "Please place the pieces in the starting position.";
@@ -224,29 +237,28 @@ export class Gui {
         mouse: true,
       });
 
-      fifteenTen.on("press", () => {
-        createSeek({ time: 15, increment: 10 })
-          .then(() => {
-            fifteenTen.setContent("Looking for an opponent...");
-            this.screen.render();
-          })
-          .catch((e) => {
-            logger.error(e);
-          });
-      });
-      tenZero.on("press", () => {
-        createSeek({ time: 10, increment: 0 })
-          .then(() => {
-            fifteenTen.setContent("Looking for an opponent...");
-            this.screen.render();
-          })
-          .catch((e) => {
-            logger.error(e);
-          });
-      });
+      fifteenTen.on("press", () => this.seekGame({ time: 15, increment: 10 }));
+      tenZero.on("press", () => this.seekGame({ time: 10, increment: 0 }));
     }
 
     this.screen.render();
+  }
+
+  private abortSeek() {
+    if (this.seekAbortController) {
+      this.seekAbortController.abort();
+      this.seekAbortController = null;
+    }
+  }
+
+  private seekGame({ time, increment }: { time: number; increment: number }) {
+    createSeek({ time, increment })
+      .then((ctrl) => {
+        this.seekAbortController = ctrl;
+      })
+      .catch((e) => {
+        logger.error(e);
+      });
   }
 
   private renderNoBoard() {
