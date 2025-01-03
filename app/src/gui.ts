@@ -5,6 +5,8 @@ import { asciiPlug, asciiUsb } from "./ascii-art";
 import { createSeek } from "./lichess";
 import { logger } from "./logger";
 import type { GameStateEvent } from "./types";
+import { playCaptureSound, playMoveSound, playNotifySound } from "./sounds";
+import { Chess } from "chess.js";
 
 type ClockAnchor = {
   wtime: number;
@@ -38,19 +40,22 @@ export class Gui {
 
   public terminateGame() {
     this.hasGame = false;
-    this.render();
+    playNotifySound();
   }
 
   public setBoardStatus(hasBoard: boolean) {
     this.hasBoard = hasBoard;
-    this.render();
   }
 
   public setMyColor(color: "black" | "white") {
     this.color = color;
+    this.hasGame = true;
+    playNotifySound();
   }
 
-  public updateClock({ btime, wtime, moves }: GameStateEvent) {
+  public updateFromLichess(event: GameStateEvent) {
+    this.playGameSound(event);
+    const { btime, wtime, moves } = event;
     this.hasGame = true;
     this.clockAnchor = {
       setAt: Date.now(),
@@ -60,12 +65,42 @@ export class Gui {
     this.isMyTurn =
       (this.color === "white" && moves.length % 2 === 0) ||
       (this.color === "black" && moves.length % 2 === 1);
-    this.render();
   }
 
   public updateBoard(board: Array<Array<SquareState>>) {
     this.board = board;
-    this.render();
+  }
+
+  private async playGameSound(event: GameStateEvent) {
+    switch (event.status) {
+      case "mate":
+      case "resign":
+      case "draw":
+      case "timeout":
+      case "aborted":
+      case "nostart":
+      case "outoftime":
+      case "cheat":
+      case "unknownfinish":
+      case "stalemate":
+      case "created":
+        return playNotifySound();
+      case "started": {
+        if (!event.moves.length) {
+          return playNotifySound();
+        }
+        const g = new Chess();
+        for (const move of event.moves.slice(0, -1)) {
+          g.move(move);
+        }
+        const lastMove = g.move(event.moves[event.moves.length - 1]);
+        if (lastMove.captured) {
+          return playCaptureSound();
+        } else {
+          return playMoveSound();
+        }
+      }
+    }
   }
 
   private async autoRefresh() {

@@ -144,12 +144,12 @@ async function emitLichessEvents(gameId: string, game: GameHandler, gui: Gui) {
     logger.info("got lichess event", lichessEvent);
     switch (lichessEvent.type) {
       case "gameFull": {
-        gui.updateClock(lichessEvent.state);
+        gui.updateFromLichess(lichessEvent.state);
         await game.updateLichessMoves(lichessEvent.state.moves);
         break;
       }
       case "gameState": {
-        gui.updateClock(lichessEvent);
+        gui.updateFromLichess(lichessEvent);
         await game.updateLichessMoves(lichessEvent.moves);
         break;
       }
